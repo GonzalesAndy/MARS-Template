@@ -45,7 +45,7 @@ export default function Layout() {
 
       // People management
       if (pathSegments[2] === 'people') {
-        breadcrumbs.push({ label: 'Gestion des Membres' });
+        breadcrumbs.push({ label: 'Gestion des Personnes' });
       }
       // Contacts management
       else if (pathSegments[2] === 'contacts') {

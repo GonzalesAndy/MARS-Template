@@ -106,7 +106,7 @@ export default function HomePage() {
             onClick={() => setFilterType('members')}
             className="transition-all hover:scale-105"
           >
-            Membres
+            Personnes
           </Button>
           <Button
             variant={filterType === 'number' ? 'default' : 'outline'}
@@ -169,7 +169,7 @@ export default function HomePage() {
                 <TableHead className="w-16 py-5"></TableHead>
                 <TableHead className="font-semibold text-foreground text-sm uppercase tracking-wider py-5">Client</TableHead>
                 <TableHead className="font-semibold text-foreground text-sm uppercase tracking-wider py-5">Adresse</TableHead>
-                <TableHead className="font-semibold text-foreground text-sm uppercase tracking-wider py-5">Membres</TableHead>
+                <TableHead className="font-semibold text-foreground text-sm uppercase tracking-wider py-5">Personnes</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

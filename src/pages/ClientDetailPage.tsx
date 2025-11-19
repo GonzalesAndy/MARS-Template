@@ -136,11 +136,11 @@ export default function ClientDetailPage() {
         telephone: formData.telephone || '',
         role: formData.role || 'Membre',
         situation_familiale: formData.situation_familiale,
-        logement: formData.logement,
+        adresse: formData.adresse,
         revenus: formData.revenus,
         charges: formData.charges,
         profession: formData.profession,
-        cotation: formData.cotation,
+        fiscalite: formData.fiscalite,
         modified_at: new Date().toISOString(),
         modified_by: 'Agent (Vous)'
       };
@@ -403,6 +403,22 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
+        {/* Cotation Section */}
+        {isEditingClient && (
+          <div className="border-t border-border/30 pt-6 pb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm font-medium text-muted-foreground">Cotation</p>
+            </div>
+            <Input
+              value={displayClient?.cotation || ''}
+              onChange={(e) => handleClientChange('cotation', e.target.value)}
+              placeholder="Ex: A+, A, B+, B, C+"
+              className="max-w-xs"
+            />
+          </div>
+        )}
+
         {/* Segments Section */}
         {isEditingClient && (
           <div className="border-t border-border/30 pt-6">
@@ -501,11 +517,11 @@ export default function ClientDetailPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Logement</label>
+                <label className="text-sm font-medium text-muted-foreground">Adresse</label>
                 <Input
-                  value={formData.logement || ''}
-                  onChange={(e) => setFormData({...formData, logement: e.target.value})}
-                  placeholder="Type de logement (propriétaire, locataire, etc.)"
+                  value={formData.adresse || ''}
+                  onChange={(e) => setFormData({...formData, adresse: e.target.value})}
+                  placeholder="Adresse du membre"
                 />
               </div>
             </div>
@@ -532,15 +548,6 @@ export default function ClientDetailPage() {
                   value={formData.profession || ''}
                   onChange={(e) => setFormData({...formData, profession: e.target.value})}
                   placeholder="Profession"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">Cotation</label>
-                <Input
-                  value={formData.cotation || ''}
-                  onChange={(e) => setFormData({...formData, cotation: e.target.value})}
-                  placeholder="Cotation"
                 />
               </div>
 
@@ -572,6 +579,65 @@ export default function ClientDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* Fiscalité Section */}
+              <div className="pt-4 border-t border-border/30">
+                <h4 className="text-sm font-semibold text-foreground mb-3">Fiscalité</h4>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Régime fiscal</label>
+                    <Input
+                      value={formData.fiscalite?.regime_fiscal || ''}
+                      onChange={(e) => setFormData({
+                        ...formData, 
+                        fiscalite: { ...formData.fiscalite, regime_fiscal: e.target.value }
+                      })}
+                      placeholder="Ex: Régime réel, Micro-entreprise"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Taux d'imposition (%)</label>
+                    <Input
+                      type="number"
+                      value={formData.fiscalite?.taux_imposition || ''}
+                      onChange={(e) => setFormData({
+                        ...formData, 
+                        fiscalite: { ...formData.fiscalite, taux_imposition: Number(e.target.value) }
+                      })}
+                      placeholder="Taux en %"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Nombre de parts</label>
+                    <Input
+                      type="number"
+                      step="0.5"
+                      value={formData.fiscalite?.nombre_parts || ''}
+                      onChange={(e) => setFormData({
+                        ...formData, 
+                        fiscalite: { ...formData.fiscalite, nombre_parts: Number(e.target.value) }
+                      })}
+                      placeholder="Ex: 1, 1.5, 2"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground">Revenus imposables (€)</label>
+                    <Input
+                      type="number"
+                      value={formData.fiscalite?.revenus_imposables || ''}
+                      onChange={(e) => setFormData({
+                        ...formData, 
+                        fiscalite: { ...formData.fiscalite, revenus_imposables: Number(e.target.value) }
+                      })}
+                      placeholder="Revenus imposables"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -616,10 +682,10 @@ export default function ClientDetailPage() {
                     </div>
                   )}
 
-                  {selectedPersonne.logement && (
+                  {selectedPersonne.adresse && (
                     <div>
-                      <label className="text-sm text-muted-foreground">Logement</label>
-                      <p className="text-foreground mt-1">{selectedPersonne.logement}</p>
+                      <label className="text-sm text-muted-foreground">Adresse</label>
+                      <p className="text-foreground mt-1">{selectedPersonne.adresse}</p>
                     </div>
                   )}
 
@@ -657,13 +723,6 @@ export default function ClientDetailPage() {
                     <label className="text-sm text-muted-foreground">Rôle</label>
                     <p className="text-foreground mt-1">{selectedPersonne.role}</p>
                   </div>
-
-                  {selectedPersonne.cotation && (
-                    <div>
-                      <label className="text-sm text-muted-foreground">Cotation</label>
-                      <p className="text-foreground mt-1 font-mono text-lg">{selectedPersonne.cotation}</p>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -701,28 +760,61 @@ export default function ClientDetailPage() {
                 </div>
               </div>
 
-              {/* Modification History */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5 text-primary" />
-                  Historique des Modifications
-                </h3>
-                <div className="bg-background/50 rounded-lg p-4 border border-border/30">
-                  <div className="flex items-start gap-3">
-                    <FileText className="h-5 w-5 text-muted-foreground mt-1" />
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground mb-1">Dernière modification</p>
-                      <p className="text-foreground font-medium">
-                        {new Date(selectedPersonne.modified_at).toLocaleDateString('fr-FR')}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Par: <span className="text-foreground">{selectedPersonne.modified_by}</span>
-                      </p>
-                    </div>
+              {/* Fiscalité */}
+              {selectedPersonne.fiscalite && (
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Fiscalité
+                  </h3>
+                  <div className="space-y-4 bg-background/50 rounded-lg p-4 border border-border/30">
+                    {selectedPersonne.fiscalite.regime_fiscal && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">Régime fiscal</label>
+                        <p className="text-foreground mt-1">{selectedPersonne.fiscalite.regime_fiscal}</p>
+                      </div>
+                    )}
+
+                    {selectedPersonne.fiscalite.taux_imposition !== undefined && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">Taux d'imposition</label>
+                        <p className="text-foreground mt-1 text-xl font-semibold">{selectedPersonne.fiscalite.taux_imposition}%</p>
+                      </div>
+                    )}
+
+                    {selectedPersonne.fiscalite.nombre_parts !== undefined && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">Nombre de parts</label>
+                        <p className="text-foreground mt-1">{selectedPersonne.fiscalite.nombre_parts}</p>
+                      </div>
+                    )}
+
+                    {selectedPersonne.fiscalite.revenus_imposables !== undefined && (
+                      <div>
+                        <label className="text-sm text-muted-foreground">Revenus imposables</label>
+                        <p className="text-foreground mt-1 text-xl font-semibold">
+                          {selectedPersonne.fiscalite.revenus_imposables.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
+          </div>
+
+          {/* Modification Info - Bottom Right */}
+          <div className="mt-6 flex justify-end">
+            <p className="text-xs text-muted-foreground">
+              Dernière modification: {new Date(selectedPersonne.modified_at).toLocaleDateString('fr-FR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+              })} à {new Date(selectedPersonne.modified_at).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })} par {selectedPersonne.modified_by}
+            </p>
           </div>
         </div>
       )}
@@ -757,11 +849,6 @@ export default function ClientDetailPage() {
                       <p className="font-medium text-foreground">{personne.prenom} {personne.nom}</p>
                       <p className="text-xs text-primary">{personne.role}</p>
                     </div>
-                    {personne.cotation && (
-                      <span className="px-2 py-0.5 rounded bg-primary/10 text-xs font-mono text-primary">
-                        {personne.cotation}
-                      </span>
-                    )}
                   </div>
                   <div className="space-y-1 text-xs text-muted-foreground">
                     {personne.email && (
@@ -839,6 +926,14 @@ export default function ClientDetailPage() {
                 {client.statut}
               </span>
             </div>
+
+            {/* Cotation */}
+            {client.cotation && (
+              <div className="p-4 rounded-lg bg-background/50 border border-border/30">
+                <p className="text-sm text-muted-foreground mb-2">Cotation</p>
+                <p className="text-2xl font-bold text-primary font-mono">{client.cotation}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

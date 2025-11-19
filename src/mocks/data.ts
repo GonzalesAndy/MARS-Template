@@ -17,6 +17,7 @@ export interface Client {
   risque: 'Faible' | 'Modéré' | 'Élevé';
   potentiel: number; // Score de 0 à 100
   statut: 'Actif' | 'Inactif' | 'Prospect';
+  cotation?: string;
 }
 
 export interface Personne {
@@ -29,11 +30,16 @@ export interface Personne {
   telephone: string;
   role: string;
   situation_familiale?: string;
-  logement?: string;
+  adresse?: string;
   revenus?: number;
   charges?: number;
   profession?: string;
-  cotation?: string;
+  fiscalite?: {
+    regime_fiscal?: string;
+    taux_imposition?: number;
+    nombre_parts?: number;
+    revenus_imposables?: number;
+  };
   modified_at: string;
   modified_by: string;
 }
@@ -140,6 +146,7 @@ export const mockClients: Client[] = [
     risque: 'Faible',
     potentiel: 85,
     statut: 'Actif',
+    cotation: 'A+',
   },
   {
     id: 'CLI002',
@@ -159,6 +166,7 @@ export const mockClients: Client[] = [
     risque: 'Modéré',
     potentiel: 72,
     statut: 'Actif',
+    cotation: 'A',
   },
   {
     id: 'CLI003',
@@ -178,6 +186,7 @@ export const mockClients: Client[] = [
     risque: 'Faible',
     potentiel: 68,
     statut: 'Actif',
+    cotation: 'B+',
   },
   {
     id: 'CLI004',
@@ -197,6 +206,7 @@ export const mockClients: Client[] = [
     risque: 'Modéré',
     potentiel: 92,
     statut: 'Actif',
+    cotation: 'A+',
   },
   {
     id: 'CLI005',
@@ -216,6 +226,7 @@ export const mockClients: Client[] = [
     risque: 'Faible',
     potentiel: 55,
     statut: 'Actif',
+    cotation: 'B',
   },
   {
     id: 'CLI006',
@@ -235,6 +246,7 @@ export const mockClients: Client[] = [
     risque: 'Élevé',
     potentiel: 48,
     statut: 'Actif',
+    cotation: 'C+',
   },
   {
     id: 'CLI007',
@@ -253,6 +265,7 @@ export const mockClients: Client[] = [
     risque: 'Faible',
     potentiel: 62,
     statut: 'Prospect',
+    cotation: 'B-',
   },
   {
     id: 'CLI008',
@@ -272,6 +285,7 @@ export const mockClients: Client[] = [
     risque: 'Faible',
     potentiel: 78,
     statut: 'Actif',
+    cotation: 'A',
   },
 ];
 
@@ -286,10 +300,15 @@ export const mockPersonnes: Personne[] = [
     telephone: '06 12 34 56 78',
     role: 'Gérant',
     situation_familiale: 'Marié',
-    logement: 'Propriétaire',
+    adresse: '15 Rue de la République, 75008 Paris',
     revenus: 85000,
     profession: 'Directeur Général',
-    cotation: 'A+',
+    fiscalite: {
+      regime_fiscal: 'Régime réel',
+      taux_imposition: 30,
+      nombre_parts: 2.5,
+      revenus_imposables: 78000,
+    },
     modified_at: '2024-11-01',
     modified_by: 'Marie Dubois',
   },
@@ -303,10 +322,15 @@ export const mockPersonnes: Personne[] = [
     telephone: '06 78 90 12 34',
     role: 'Titulaire',
     situation_familiale: 'Célibataire',
-    logement: 'Locataire',
+    adresse: '8 Boulevard Gambetta, 33000 Bordeaux',
     revenus: 52000,
     profession: 'Architecte',
-    cotation: 'B+',
+    fiscalite: {
+      regime_fiscal: 'Micro-entreprise',
+      taux_imposition: 14,
+      nombre_parts: 1,
+      revenus_imposables: 48000,
+    },
     modified_at: '2024-10-15',
     modified_by: 'Jean Moreau',
   },

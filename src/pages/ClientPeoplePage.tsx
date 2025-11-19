@@ -109,12 +109,38 @@ export default function ClientPeoplePage() {
 
       {/* Header */}
       <div className="bg-card/40 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-border/50 animate-slide-up">
-        <div className="flex items-center gap-4 mb-2">
+        <div className="flex items-center gap-4 mb-6">
           <Users className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-4xl font-bold text-foreground">Gestion des Membres</h1>
-            <p className="text-muted-foreground mt-2">Client: {client.denomination}</p>
-            <p className="text-sm text-muted-foreground/70 font-mono">{client.numero_client}</p>
+            <h1 className="text-4xl font-bold text-foreground">Gestion des Personnes</h1>
+          </div>
+        </div>
+
+        {/* Client Info Recap */}
+        <div className="bg-background/50 rounded-lg p-4 border border-border/30">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Client</p>
+              <p className="text-foreground font-medium">{client.denomination}</p>
+              <p className="text-xs text-muted-foreground/70 font-mono mt-1">{client.numero_client}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Agence</p>
+              <p className="text-foreground">{client.agence}</p>
+              <p className="text-xs text-muted-foreground mt-1">Conseiller: {client.conseiller_referent}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Statut</p>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  client.statut === 'Actif' ? 'bg-green-500/10 text-green-500' :
+                  client.statut === 'Inactif' ? 'bg-gray-500/10 text-gray-500' :
+                  'bg-blue-500/10 text-blue-500'
+                }`}>
+                  {client.statut}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -123,17 +149,17 @@ export default function ClientPeoplePage() {
       <div className="bg-card/40 backdrop-blur-sm rounded-2xl shadow-2xl border border-border/50 overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
         <div className="p-6 border-b border-border/50">
           <h2 className="text-xl font-semibold text-foreground">
-            Liste des Membres ({personnes.length})
+            Liste des Personnes ({personnes.length})
           </h2>
         </div>
 
         {personnes.length === 0 ? (
           <div className="p-12 text-center">
             <Users className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">Aucun membre enregistré</p>
+            <p className="text-muted-foreground mb-4">Aucune personne enregistré</p>
             <Button onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter le premier membre
+              Ajouter la première personne
             </Button>
           </div>
         ) : (
@@ -145,7 +171,6 @@ export default function ClientPeoplePage() {
                   <TableHead className="text-xs uppercase tracking-wider py-5">Rôle</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Contact</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Profession</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider py-5">Cotation</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -192,15 +217,6 @@ export default function ClientPeoplePage() {
                     </TableCell>
                     <TableCell className="py-5 text-sm text-muted-foreground">
                       {personne.profession || 'N/A'}
-                    </TableCell>
-                    <TableCell className="py-5">
-                      {personne.cotation ? (
-                        <span className="px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-sm font-mono text-accent">
-                          {personne.cotation}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
                     </TableCell>
                     <TableCell className="py-5">
                       <div className="flex gap-2">
