@@ -41,7 +41,8 @@ export default function ClientContactDetailPage() {
     client_id: clientId || '',
     type: location.state?.type || 'commercial',
     motif: '',
-    date_contact: new Date().toISOString().split('T')[0],
+    // default to current datetime in ISO
+    date_contact: new Date().toISOString(),
     etat: 'réalisé',
     agent: 'Agent Actuel',
     created_at: new Date().toISOString(),
@@ -62,13 +63,23 @@ export default function ClientContactDetailPage() {
   // Find child contacts (contacts that have this contact as parent)
   const childContacts = useMemo(() => {
     if (!formData.id) return [];
-    return mockContacts.filter(c => c.parent_contact_id === formData.id);
+    return mockContacts
+      .filter(c => c.parent_contact_id === formData.id)
+      .slice()
+      .sort((a, b) => {
+        const ta = a.date_contact ? new Date(a.date_contact).getTime() : 0;
+        const tb = b.date_contact ? new Date(b.date_contact).getTime() : 0;
+        return tb - ta;
+      });
   }, [formData.id]);
   
   // State for planning an entretien
   const [showPlanEntretien, setShowPlanEntretien] = useState(false);
   const [entretienMotif, setEntretienMotif] = useState('');
-  const [entretienDate, setEntretienDate] = useState(new Date().toISOString().split('T')[0]);
+  const [entretienCommentaire, setEntretienCommentaire] = useState('');
+  // use datetime-local value (YYYY-MM-DDTHH:MM)
+  const isoNow = new Date().toISOString();
+  const [entretienDate, setEntretienDate] = useState(isoNow.substring(0,16));
 
   // State for realizing an entretien
   const [showOfferSelection, setShowOfferSelection] = useState(false);
@@ -99,8 +110,8 @@ export default function ClientContactDetailPage() {
   const handleSave = () => {
     const newErrors: Record<string, boolean> = {};
     
-    if (!formData.motif) newErrors.motif = true;
-    if (!formData.date_contact) newErrors.date_contact = true;
+  if (!formData.motif) newErrors.motif = true;
+  if (!formData.date_contact) newErrors.date_contact = true;
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -109,6 +120,9 @@ export default function ClientContactDetailPage() {
 
     const savedContact: Contact = {
       ...formData,
+      // ensure date_contact stored as full ISO datetime
+      date_contact: new Date(formData.date_contact).toISOString(),
+  commentaire: formData.commentaire || '',
       modified_at: new Date().toISOString(),
       modified_by: 'Agent Actuel'
     };
@@ -126,13 +140,6 @@ export default function ClientContactDetailPage() {
     }
   };
 
-  const handleDelete = () => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce contact ?')) {
-      navigate(`/client/${clientId}/contacts`, {
-        state: { deletedContactId: formData.id }
-      });
-    }
-  };
 
   const handleCancel = () => {
     if (mode === 'add') {
@@ -170,7 +177,9 @@ export default function ClientContactDetailPage() {
       client_id: clientId || '',
       type: 'entretien',
       motif: entretienMotif,
-      date_contact: entretienDate,
+      commentaire: entretienCommentaire || '',
+      // entretienDate is a datetime-local string (YYYY-MM-DDTHH:MM); convert to ISO
+      date_contact: new Date(entretienDate).toISOString(),
       etat: 'planifié',
       agent: 'Agent Actuel',
       parent_contact_id: formData.id,
@@ -183,7 +192,8 @@ export default function ClientContactDetailPage() {
     if (mode === 'realiser') {
       setShowPlanEntretien(false);
       setEntretienMotif('');
-      setEntretienDate(new Date().toISOString().split('T')[0]);
+      setEntretienDate(new Date().toISOString().substring(0,16));
+      setEntretienCommentaire('');
       alert('Entretien planifié avec succès !');
       // In a real app, you would save this to the backend here
       return;
@@ -255,9 +265,7 @@ export default function ClientContactDetailPage() {
     });
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
-  };
+  
 
   const getEtatIcon = (etat: string) => {
     switch (etat) {
@@ -319,13 +327,6 @@ export default function ClientContactDetailPage() {
                   </Button>
                 </>
               )}
-              
-              {mode === 'view' && contactId !== 'new' && (
-                <Button variant="destructive" onClick={handleDelete} className="gap-2">
-                  <Trash2 className="h-4 w-4" />
-                  Supprimer
-                </Button>
-              )}
             </>
           )}
           
@@ -366,15 +367,14 @@ export default function ClientContactDetailPage() {
         <div className="flex items-center gap-4">
           <Phone className="h-10 w-10 text-primary" />
           <div className="flex-1">
-            <h1 className="text-4xl font-bold text-foreground">
-              {mode === 'add' ? `Nouveau Contact ${formData.type === 'commercial' ? 'Commercial' : 'Spontané'}` : formData.motif || 'Contact'}
+            <h1 className="text-3xl font-bold text-foreground">
+              {client.denomination}
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Client: {client.denomination}
-            </p>
-            <p className="text-sm text-muted-foreground/70 capitalize mt-1">
-              Type: {formData.type}
-            </p>
+            <p className="text-muted-foreground mt-2">N°: <span className="font-mono">{client.numero_client}</span></p>
+            <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+              <p>Agence: {client.agence || '-'}</p>
+              <p>Conseiller: {client.conseiller_referent || '-'}</p>
+            </div>
           </div>
           {mode === 'view' && (
             <span className={`px-4 py-2 rounded-full border text-sm font-medium flex items-center gap-2 capitalize ${getEtatColor(formData.etat)}`}>
@@ -418,12 +418,13 @@ export default function ClientContactDetailPage() {
             {mode === 'view' || mode === 'realiser' ? (
               <p className="text-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                {formatDate(formData.date_contact)}
+                {new Date(formData.date_contact).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
               </p>
             ) : (
               <Input
-                type="date"
-                value={formData.date_contact}
+                type="datetime-local"
+                // formData.date_contact may be ISO — convert to datetime-local value if needed
+                value={formData.date_contact ? formData.date_contact.substring(0,16) : ''}
                 onChange={(e) => handleChange('date_contact', e.target.value)}
                 className={errors.date_contact ? 'border-red-500' : ''}
               />
@@ -437,6 +438,22 @@ export default function ClientContactDetailPage() {
             </label>
             <p className="text-foreground">{formData.agent}</p>
           </div>
+          
+          {/* Commentaire libre */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">Commentaire</label>
+            {mode === 'view' || mode === 'realiser' ? (
+              <p className="text-foreground">{(formData.commentaire as string) || '-'}</p>
+            ) : (
+              <textarea
+                value={(formData.commentaire as string) || ''}
+                onChange={(e) => handleChange('commentaire', e.target.value)}
+                rows={4}
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground resize-none"
+                placeholder="Notes ou remarques sur ce contact..."
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -445,7 +462,7 @@ export default function ClientContactDetailPage() {
         <div className="bg-card/40 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-border/50 animate-slide-up" style={{ animationDelay: '0.12s' }}>
           <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
             <Phone className="h-6 w-6 text-primary" />
-            Contact Parent
+            Contact Origine
           </h2>
           <div className="bg-background/50 rounded-xl p-6 border border-border/50">
             <div className="flex items-center justify-between">
@@ -467,9 +484,9 @@ export default function ClientContactDetailPage() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Date</p>
                   <p className="text-foreground font-medium flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {formatDate(parentContact.date_contact)}
-                  </p>
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      {new Date(parentContact.date_contact).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                 </div>
               </div>
               <Button
@@ -518,7 +535,7 @@ export default function ClientContactDetailPage() {
                       <p className="text-sm text-muted-foreground mb-1">Date</p>
                       <p className="text-foreground font-medium flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {formatDate(child.date_contact)}
+                        {new Date(child.date_contact).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                     <div>
@@ -646,13 +663,6 @@ export default function ClientContactDetailPage() {
                         }`}>
                           {offer.type === 'contrat' ? 'Contrat' : 'Produit'}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          offer.statut === 'proposé' ? 'bg-blue-500/10 text-blue-500' :
-                          offer.statut === 'accepté' ? 'bg-green-500/10 text-green-500' :
-                          'bg-red-500/10 text-red-500'
-                        }`}>
-                          {offer.statut}
-                        </span>
                       </div>
                       <p className="font-semibold text-foreground text-lg">{offer.nom}</p>
                       {offer.annotation && (
@@ -709,9 +719,19 @@ export default function ClientContactDetailPage() {
                   Date de l'entretien *
                 </label>
                 <Input
-                  type="date"
+                  type="datetime-local"
                   value={entretienDate}
                   onChange={(e) => setEntretienDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">Commentaire (planification)</label>
+                <textarea
+                  value={entretienCommentaire}
+                  onChange={(e) => setEntretienCommentaire(e.target.value)}
+                  rows={3}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground resize-none"
+                  placeholder="Saisir un commentaire lié à cet entretien..."
                 />
               </div>
               <div className="flex gap-2 pt-4">

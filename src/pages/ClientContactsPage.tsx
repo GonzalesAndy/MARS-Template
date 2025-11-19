@@ -28,15 +28,23 @@ export default function ClientContactsPage() {
   const location = useLocation();
   
   const client = mockClients.find(c => c.id === clientId);
+  const sortContacts = (arr: Contact[]) => {
+    return arr.slice().sort((a, b) => {
+      const ta = a.date_contact ? new Date(a.date_contact).getTime() : 0;
+      const tb = b.date_contact ? new Date(b.date_contact).getTime() : 0;
+      return tb - ta; // newest first
+    });
+  };
+
   const [contacts, setContacts] = useState<Contact[]>(
-    mockContacts.filter(c => c.client_id === clientId)
+    sortContacts(mockContacts.filter(c => c.client_id === clientId))
   );
 
   // Update contacts list when navigating back from detail page
   useEffect(() => {
     if (location.state?.updatedContact) {
       const updated = location.state.updatedContact as Contact;
-      setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setContacts(prev => sortContacts(prev.map(c => c.id === updated.id ? updated : c)));
       // Clear the state to prevent re-adding on re-render
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -47,14 +55,14 @@ export default function ClientContactsPage() {
         if (prev.some(c => c.id === newC.id)) {
           return prev;
         }
-        return [...prev, newC];
+        return sortContacts([...prev, newC]);
       });
       // Clear the state to prevent re-adding on re-render
       navigate(location.pathname, { replace: true, state: {} });
     }
     if (location.state?.deletedContactId) {
       const deletedId = location.state.deletedContactId as string;
-      setContacts(prev => prev.filter(c => c.id !== deletedId));
+      setContacts(prev => sortContacts(prev.filter(c => c.id !== deletedId)));
       // Clear the state to prevent re-adding on re-render
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -72,7 +80,11 @@ export default function ClientContactsPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
+    try {
+      return new Date(dateString).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return dateString;
+    }
   };
 
   const handleCreateCommercial = () => {
@@ -174,11 +186,14 @@ export default function ClientContactsPage() {
 
         <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Entretiens Planifiés</span>
+            <span className="text-sm text-muted-foreground">Entretiens</span>
             <Clock className="h-5 w-5 text-blue-500" />
           </div>
           <p className="text-3xl font-bold text-blue-500">
-            {contacts.filter(c => c.type === 'entretien' && c.etat === 'planifié').length}
+            {contacts.filter(c => c.type === 'entretien').length}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {contacts.filter(c => c.type === 'entretien' && c.etat === 'planifié').length} planifié{contacts.filter(c => c.type === 'entretien' && c.etat === 'planifié').length > 1 ? 's' : ''}
           </p>
         </div>
 
@@ -219,7 +234,6 @@ export default function ClientContactsPage() {
                 <TableHead className="text-xs uppercase tracking-wider py-5">Agent</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider py-5">État</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider py-5">Lié à</TableHead>
-                <TableHead className="text-xs uppercase tracking-wider py-5">Offres</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -276,15 +290,6 @@ export default function ClientContactsPage() {
                               {parentContact.type} - {parentContact.motif}
                             </span>
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="py-5">
-                        {contact.offers && contact.offers.length > 0 ? (
-                          <span className="px-2 py-1 rounded bg-green-500/10 text-xs font-medium text-green-500">
-                            {contact.offers.length} offre{contact.offers.length > 1 ? 's' : ''}
-                          </span>
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}

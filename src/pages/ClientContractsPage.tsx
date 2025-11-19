@@ -29,28 +29,34 @@ export default function ClientContractsPage() {
   const location = useLocation();
   
   const client = mockClients.find(c => c.id === clientId);
+  const sortContrats = (arr: Contrat[]) => arr.slice().sort((a, b) => {
+    const ta = a.date_souscription ? new Date(a.date_souscription).getTime() : 0;
+    const tb = b.date_souscription ? new Date(b.date_souscription).getTime() : 0;
+    return tb - ta;
+  });
+
   const [contrats, setContrats] = useState<Contrat[]>(
-    mockContrats.filter(c => c.client_id === clientId)
+    sortContrats(mockContrats.filter(c => c.client_id === clientId))
   );
 
   // Update contrats list when navigating back from detail page
   useEffect(() => {
     if (location.state?.updatedContrat) {
       const updated = location.state.updatedContrat as Contrat;
-      setContrats(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setContrats(prev => sortContrats(prev.map(c => c.id === updated.id ? updated : c)));
       navigate(location.pathname, { replace: true, state: {} });
     }
     if (location.state?.newContrat) {
       const newC = location.state.newContrat as Contrat;
       setContrats(prev => {
         if (prev.some(c => c.id === newC.id)) return prev;
-        return [...prev, newC];
+        return sortContrats([...prev, newC]);
       });
       navigate(location.pathname, { replace: true, state: {} });
     }
     if (location.state?.deletedContratId) {
       const deletedId = location.state.deletedContratId as string;
-      setContrats(prev => prev.filter(c => c.id !== deletedId));
+      setContrats(prev => sortContrats(prev.filter(c => c.id !== deletedId)));
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
@@ -122,12 +128,15 @@ export default function ClientContractsPage() {
     return colors[domaine] || 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
 
-  // Group contracts by domain
-  const contratsByDomain = contrats.reduce((acc, contrat) => {
+  // Group contracts by domain and keep each domain list sorted newest-first
+  const contratsByDomain = Object.entries(contrats.reduce((acc, contrat) => {
     if (!acc[contrat.domaine]) {
       acc[contrat.domaine] = [];
     }
     acc[contrat.domaine].push(contrat);
+    return acc;
+  }, {} as Record<string, Contrat[]>)).reduce((acc, [domaine, list]) => {
+    acc[domaine] = sortContrats(list);
     return acc;
   }, {} as Record<string, Contrat[]>);
 

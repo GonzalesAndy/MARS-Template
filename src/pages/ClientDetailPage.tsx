@@ -74,9 +74,16 @@ export default function ClientDetailPage() {
   }, [location.state, clientId]);
   
   const client = mockClients.find(c => c.id === clientId);
+  const sortByDateDesc = <T extends { date_contact?: string; date_souscription?: string }>(arr: T[], dateKey: 'date_contact' | 'date_souscription') =>
+    arr.slice().sort((a, b) => {
+      const ta = (dateKey === 'date_contact' ? a.date_contact : a.date_souscription) ? new Date((dateKey === 'date_contact' ? a.date_contact : a.date_souscription) as string).getTime() : 0;
+      const tb = (dateKey === 'date_contact' ? b.date_contact : b.date_souscription) ? new Date((dateKey === 'date_contact' ? b.date_contact : b.date_souscription) as string).getTime() : 0;
+      return tb - ta;
+    });
+
   const clientPersonnes = mockPersonnes.filter(p => p.client_id === clientId);
-  const clientContrats = mockContrats.filter(c => c.client_id === clientId);
-  const clientContacts = mockContacts.filter(c => c.client_id === clientId);
+  const clientContrats = sortByDateDesc(mockContrats.filter(c => c.client_id === clientId), 'date_souscription');
+  const clientContacts = sortByDateDesc(mockContacts.filter(c => c.client_id === clientId), 'date_contact');
   
   // Initialize client form data when entering edit mode
   useEffect(() => {
@@ -1067,7 +1074,7 @@ export default function ClientDetailPage() {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    <span>{new Date(contact.date_contact).toLocaleDateString('fr-FR')}</span>
+                    <span>{new Date(contact.date_contact).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="h-3 w-3" />

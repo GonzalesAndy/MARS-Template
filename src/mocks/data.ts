@@ -59,6 +59,7 @@ export interface Contact {
   personne_id?: string;
   type: 'commercial' | 'spontané' | 'entretien';
   motif: string;
+  commentaire?: string;
   date_contact: string;
   etat: 'planifié' | 'réalisé' | 'annulé';
   agent: string;
@@ -342,11 +343,12 @@ export const mockContacts: Contact[] = [
     client_id: 'CLI001',
     type: 'commercial',
     motif: 'Appel de prospection',
-    date_contact: '2024-11-10',
+    commentaire: '',
+    date_contact: '2024-11-10T09:30:00',
     etat: 'réalisé',
     agent: 'Marie Dubois',
-    created_at: '2024-11-10',
-    modified_at: '2024-11-10',
+    created_at: '2024-11-10T09:30:00',
+    modified_at: '2024-11-10T09:30:00',
     modified_by: 'Marie Dubois',
   },
   {
@@ -354,12 +356,13 @@ export const mockContacts: Contact[] = [
     client_id: 'CLI001',
     type: 'entretien',
     motif: 'Bilan annuel des contrats',
-    date_contact: '2024-11-25',
+    commentaire: '',
+    date_contact: '2024-11-25T10:00:00',
     etat: 'planifié',
     agent: 'Marie Dubois',
     parent_contact_id: 'CNT001',
-    created_at: '2024-11-10',
-    modified_at: '2024-11-10',
+    created_at: '2024-11-10T11:00:00',
+    modified_at: '2024-11-10T11:00:00',
     modified_by: 'Marie Dubois',
   },
   {
@@ -367,11 +370,12 @@ export const mockContacts: Contact[] = [
     client_id: 'CLI002',
     type: 'spontané',
     motif: 'Demande d\'information produit',
-    date_contact: '2024-11-08',
+    commentaire: '',
+    date_contact: '2024-11-08T15:20:00',
     etat: 'réalisé',
     agent: 'Pierre Lefebvre',
-    created_at: '2024-11-08',
-    modified_at: '2024-11-08',
+    created_at: '2024-11-08T15:20:00',
+    modified_at: '2024-11-08T15:20:00',
     modified_by: 'Pierre Lefebvre',
   },
   {
@@ -379,7 +383,8 @@ export const mockContacts: Contact[] = [
     client_id: 'CLI002',
     type: 'entretien',
     motif: 'Proposition nouvelle assurance',
-    date_contact: '2024-11-15',
+    commentaire: 'Client intéressé, en attente de devis',
+    date_contact: '2024-11-15T14:00:00',
     etat: 'réalisé',
     agent: 'Pierre Lefebvre',
     parent_contact_id: 'CNT003',
@@ -394,8 +399,8 @@ export const mockContacts: Contact[] = [
       }
     ],
     commentaire_cloture: 'Devis envoyé, relance prévue dans 10 jours',
-    created_at: '2024-11-12',
-    modified_at: '2024-11-15',
+    created_at: '2024-11-12T09:45:00',
+    modified_at: '2024-11-15T14:00:00',
     modified_by: 'Pierre Lefebvre',
   },
 ];
