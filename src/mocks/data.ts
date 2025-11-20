@@ -95,6 +95,59 @@ export const AVAILABLE_PRODUITS = [
   'Solution de Gestion de Trésorerie',
 ];
 
+// ====== CONTRAT TEMPLATE (Catalogue fixe) ======
+
+export interface ContratTemplateOption {
+  id: string;
+  nom: string;
+  description: string;
+  prix_mensuel: number;
+  prix_annuel: number;
+  est_gratuite: boolean;
+}
+
+export interface ContratTemplate {
+  id: string;
+  code_contrat: string;
+  intitule: string;
+  descriptif: string;
+  domaine: 'Assurance' | 'Téléphonie' | 'Énergie' | 'Internet';
+  tarif_base_mensuel: number;
+  tarif_base_annuel: number;
+  options: ContratTemplateOption[]; // Options fixes du contrat
+  duree_standard?: number; // Durée par défaut en mois
+}
+
+// ====== SOUSCRIPTION (Instance client d'un contrat) ======
+
+export interface SouscriptionOption {
+  option_id: string; // Référence à l'option du template
+  statut: 'souscrite' | 'non souscrite';
+}
+
+export interface Souscription {
+  id: string;
+  client_id: string;
+  contrat_template_id: string; // Référence au template
+  code_souscription: string; // Code unique de la souscription
+  periodicite: 'mensuelle' | 'annuelle';
+  date_souscription: string;
+  date_debut?: string;
+  date_fin?: string;
+  duree?: number; // en mois
+  etat: 'actif' | 'planifié' | 'résilié' | 'annulé';
+  options_souscrites: SouscriptionOption[]; // Statut des options
+  montant_mensuel: number; // Calculé
+  montant_annuel: number; // Calculé
+  agent_origine: string;
+  date_origine: string;
+  modified_at?: string;
+  modified_by?: string;
+}
+
+// Legacy type alias for backward compatibility during migration
+export type Contrat = Souscription;
+
 export interface ContratOption {
   id: string;
   nom: string;
@@ -103,28 +156,6 @@ export interface ContratOption {
   prix_annuel: number;
   est_gratuite: boolean;
   statut: 'souscrite' | 'non souscrite';
-}
-
-export interface Contrat {
-  id: string;
-  client_id: string;
-  code_contrat: string;
-  intitule: string;
-  descriptif: string;
-  domaine: string;
-  tarif_base: number;
-  duree?: number; // en mois
-  periodicite: 'mensuelle' | 'annuelle';
-  date_souscription: string;
-  date_fin?: string;
-  etat: 'actif' | 'planifié' | 'résilié' | 'annulé';
-  options?: ContratOption[];
-  montant_annuel: number;
-  montant_mensuel: number;
-  agent_origine: string;
-  date_origine: string;
-  modified_at?: string;
-  modified_by?: string;
 }
 
 // Mock data
@@ -405,74 +436,298 @@ export const mockContacts: Contact[] = [
   },
 ];
 
-export const mockContrats: Contrat[] = [
+// ====== CATALOGUE DE CONTRATS (Templates) ======
+
+export const mockContratsTemplates: ContratTemplate[] = [
   {
-    id: 'CTR001',
-    client_id: 'CLI001',
-    code_contrat: 'ASS-PRO-2024-147',
+    id: 'TPL_ASS_RC',
+    code_contrat: 'ASS-RC-PRO',
     intitule: 'Assurance Responsabilité Civile Professionnelle',
-    descriptif: 'Couverture RC pour activités de conseil IT',
+    descriptif: 'Couverture RC pour activités professionnelles - Protection contre les dommages causés à des tiers dans le cadre de votre activité',
     domaine: 'Assurance',
-    tarif_base: 2400,
-    duree: 12,
-    periodicite: 'annuelle',
-    date_souscription: '2022-03-20',
-    etat: 'actif',
+    tarif_base_mensuel: 200,
+    tarif_base_annuel: 2400,
+    duree_standard: 12,
     options: [
       {
-        id: 'OPT001',
+        id: 'OPT_ASS_RC_001',
         nom: 'Protection Juridique',
         description: 'Assistance juridique en cas de litige',
         prix_mensuel: 50,
         prix_annuel: 600,
         est_gratuite: false,
-        statut: 'souscrite'
       },
       {
-        id: 'OPT002',
+        id: 'OPT_ASS_RC_002',
         nom: 'Assistance 24/7',
         description: 'Support téléphonique disponible 24h/24',
         prix_mensuel: 0,
         prix_annuel: 0,
         est_gratuite: true,
-        statut: 'souscrite'
-      }
+      },
+      {
+        id: 'OPT_ASS_RC_003',
+        nom: 'Extension Cyber-Risques',
+        description: 'Couverture complémentaire contre les attaques informatiques',
+        prix_mensuel: 75,
+        prix_annuel: 900,
+        est_gratuite: false,
+      },
     ],
-    montant_annuel: 3000,
+  },
+  {
+    id: 'TPL_ASS_CYBER',
+    code_contrat: 'ASS-CYBER',
+    intitule: 'Assurance Cyber-Risques',
+    descriptif: 'Protection complète contre les attaques informatiques, violations de données et interruptions d\'activité liées au numérique',
+    domaine: 'Assurance',
+    tarif_base_mensuel: 150,
+    tarif_base_annuel: 1800,
+    duree_standard: 12,
+    options: [
+      {
+        id: 'OPT_ASS_CYBER_001',
+        nom: 'Audit de Sécurité Annuel',
+        description: 'Audit complet de votre infrastructure informatique',
+        prix_mensuel: 100,
+        prix_annuel: 1200,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_ASS_CYBER_002',
+        nom: 'Formation Personnel',
+        description: 'Sessions de formation cybersécurité pour vos équipes',
+        prix_mensuel: 50,
+        prix_annuel: 600,
+        est_gratuite: false,
+      },
+    ],
+  },
+  {
+    id: 'TPL_ASS_FLOTTE',
+    code_contrat: 'ASS-FLOTTE-AUTO',
+    intitule: 'Assurance Flotte Automobile',
+    descriptif: 'Assurance tous risques pour votre parc de véhicules professionnels (minimum 3 véhicules)',
+    domaine: 'Assurance',
+    tarif_base_mensuel: 300,
+    tarif_base_annuel: 3600,
+    duree_standard: 12,
+    options: [
+      {
+        id: 'OPT_ASS_FLOTTE_001',
+        nom: 'Véhicule de Remplacement',
+        description: 'Mise à disposition d\'un véhicule en cas de panne ou accident',
+        prix_mensuel: 80,
+        prix_annuel: 960,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_ASS_FLOTTE_002',
+        nom: 'Assistance Dépannage 24/7',
+        description: 'Service de dépannage disponible partout en France',
+        prix_mensuel: 0,
+        prix_annuel: 0,
+        est_gratuite: true,
+      },
+    ],
+  },
+  {
+    id: 'TPL_TEL_MOBILE',
+    code_contrat: 'TEL-MOBILE-ENT',
+    intitule: 'Pack Téléphonie Mobile Entreprise',
+    descriptif: 'Forfaits mobiles illimités pour vos collaborateurs - Appels, SMS et data 4G/5G',
+    domaine: 'Téléphonie',
+    tarif_base_mensuel: 450,
+    tarif_base_annuel: 5400,
+    duree_standard: 24,
+    options: [
+      {
+        id: 'OPT_TEL_MOBILE_001',
+        nom: 'Roaming International',
+        description: 'Appels et data à l\'étranger inclus (Europe + USA)',
+        prix_mensuel: 100,
+        prix_annuel: 1200,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_TEL_MOBILE_002',
+        nom: 'Téléphones Professionnels',
+        description: 'Location de smartphones dernière génération',
+        prix_mensuel: 150,
+        prix_annuel: 1800,
+        est_gratuite: false,
+      },
+    ],
+  },
+  {
+    id: 'TPL_TEL_FIXE',
+    code_contrat: 'TEL-FIXE-ENT',
+    intitule: 'Téléphonie Fixe Professionnelle',
+    descriptif: 'Standard téléphonique VoIP avec numéros illimités et fonctionnalités avancées',
+    domaine: 'Téléphonie',
+    tarif_base_mensuel: 250,
+    tarif_base_annuel: 3000,
+    duree_standard: 36,
+    options: [
+      {
+        id: 'OPT_TEL_FIXE_001',
+        nom: 'Serveur Vocal Interactif',
+        description: 'SVI personnalisé pour l\'accueil de vos clients',
+        prix_mensuel: 75,
+        prix_annuel: 900,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_TEL_FIXE_002',
+        nom: 'Enregistrement d\'Appels',
+        description: 'Système d\'enregistrement et d\'archivage des communications',
+        prix_mensuel: 50,
+        prix_annuel: 600,
+        est_gratuite: false,
+      },
+    ],
+  },
+  {
+    id: 'TPL_NET_FIBRE',
+    code_contrat: 'NET-FIBRE-PRO',
+    intitule: 'Internet Fibre Professionnelle',
+    descriptif: 'Connexion fibre optique très haut débit avec garantie de temps de rétablissement',
+    domaine: 'Internet',
+    tarif_base_mensuel: 150,
+    tarif_base_annuel: 1800,
+    duree_standard: 12,
+    options: [
+      {
+        id: 'OPT_NET_FIBRE_001',
+        nom: 'Débit Garanti',
+        description: 'Garantie de débit minimum avec compensation en cas de non-respect',
+        prix_mensuel: 100,
+        prix_annuel: 1200,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_NET_FIBRE_002',
+        nom: 'IP Fixes',
+        description: 'Attribution de 5 adresses IP fixes',
+        prix_mensuel: 30,
+        prix_annuel: 360,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_NET_FIBRE_003',
+        nom: 'Support Technique 24/7',
+        description: 'Assistance technique disponible jour et nuit',
+        prix_mensuel: 0,
+        prix_annuel: 0,
+        est_gratuite: true,
+      },
+    ],
+  },
+  {
+    id: 'TPL_ENRG_ELEC',
+    code_contrat: 'ENRG-ELEC-PRO',
+    intitule: 'Contrat Énergie Électricité Professionnelle',
+    descriptif: 'Fourniture d\'électricité pour locaux professionnels avec tarifs compétitifs',
+    domaine: 'Énergie',
+    tarif_base_mensuel: 400,
+    tarif_base_annuel: 4800,
+    duree_standard: 24,
+    options: [
+      {
+        id: 'OPT_ENRG_ELEC_001',
+        nom: 'Énergie Verte',
+        description: 'Électricité 100% d\'origine renouvelable',
+        prix_mensuel: 50,
+        prix_annuel: 600,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_ENRG_ELEC_002',
+        nom: 'Suivi Consommation',
+        description: 'Plateforme de monitoring en temps réel de votre consommation',
+        prix_mensuel: 0,
+        prix_annuel: 0,
+        est_gratuite: true,
+      },
+    ],
+  },
+  {
+    id: 'TPL_ENRG_GAZ',
+    code_contrat: 'ENRG-GAZ-PRO',
+    intitule: 'Contrat Énergie Gaz Professionnel',
+    descriptif: 'Fourniture de gaz naturel pour chauffage et process industriels',
+    domaine: 'Énergie',
+    tarif_base_mensuel: 350,
+    tarif_base_annuel: 4200,
+    duree_standard: 24,
+    options: [
+      {
+        id: 'OPT_ENRG_GAZ_001',
+        nom: 'Biogaz',
+        description: 'Option biogaz pour réduire votre empreinte carbone',
+        prix_mensuel: 80,
+        prix_annuel: 960,
+        est_gratuite: false,
+      },
+      {
+        id: 'OPT_ENRG_GAZ_002',
+        nom: 'Prix Fixes',
+        description: 'Garantie de prix fixe pendant toute la durée du contrat',
+        prix_mensuel: 0,
+        prix_annuel: 0,
+        est_gratuite: true,
+      },
+    ],
+  },
+];
+
+// ====== SOUSCRIPTIONS (Instances client) ======
+
+export const mockSouscriptions: Souscription[] = [
+  {
+    id: 'SUB001',
+    client_id: 'CLI001',
+    contrat_template_id: 'TPL_ASS_RC',
+    code_souscription: 'ASS-PRO-2024-147',
+    periodicite: 'annuelle',
+    date_souscription: '2022-03-20',
+    date_debut: '2022-04-01',
+    duree: 12,
+    etat: 'actif',
+    options_souscrites: [
+      { option_id: 'OPT_ASS_RC_001', statut: 'souscrite' },
+      { option_id: 'OPT_ASS_RC_002', statut: 'souscrite' },
+      { option_id: 'OPT_ASS_RC_003', statut: 'non souscrite' },
+    ],
     montant_mensuel: 250,
+    montant_annuel: 3000,
     agent_origine: 'Marie Dubois',
     date_origine: '2022-03-20',
     modified_at: '2024-11-01',
     modified_by: 'Marie Dubois',
   },
   {
-    id: 'CTR002',
+    id: 'SUB002',
     client_id: 'CLI001',
-    code_contrat: 'TEL-ENT-2023-892',
-    intitule: 'Pack Téléphonie Entreprise',
-    descriptif: 'Forfait 15 lignes mobiles + internet',
-    domaine: 'Téléphonie',
-    tarif_base: 450,
-    duree: 24,
+    contrat_template_id: 'TPL_TEL_MOBILE',
+    code_souscription: 'TEL-ENT-2023-892',
     periodicite: 'mensuelle',
     date_souscription: '2023-01-10',
+    date_debut: '2023-02-01',
+    duree: 24,
     etat: 'actif',
-    options: [
-      {
-        id: 'OPT003',
-        nom: 'Roaming International',
-        description: 'Appels et data à l\'étranger inclus',
-        prix_mensuel: 100,
-        prix_annuel: 1200,
-        est_gratuite: false,
-        statut: 'non souscrite'
-      }
+    options_souscrites: [
+      { option_id: 'OPT_TEL_MOBILE_001', statut: 'non souscrite' },
+      { option_id: 'OPT_TEL_MOBILE_002', statut: 'non souscrite' },
     ],
-    montant_annuel: 5400,
     montant_mensuel: 450,
+    montant_annuel: 5400,
     agent_origine: 'Marie Dubois',
     date_origine: '2023-01-10',
     modified_at: '2023-01-10',
     modified_by: 'Marie Dubois',
   },
 ];
+
+// Alias pour compatibilité backward (à supprimer progressivement)
+export const mockContrats: Contrat[] = mockSouscriptions;

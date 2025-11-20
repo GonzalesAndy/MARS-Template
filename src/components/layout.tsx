@@ -8,7 +8,7 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
 import { Building2 } from 'lucide-react';
-import { mockClients, mockContacts, mockContrats } from '@/mocks/data';
+import { mockClients, mockContacts, mockSouscriptions, mockContratsTemplates } from '@/mocks/data';
 
 interface BreadcrumbItemType {
   label: string;
@@ -17,7 +17,7 @@ interface BreadcrumbItemType {
 
 export default function Layout() {
   const location = useLocation();
-  const params = useParams<{ clientId?: string; contactId?: string; contractId?: string }>();
+  const params = useParams<{ clientId?: string; contactId?: string; contractId?: string; subscriptionId?: string }>();
   
   // Generate dynamic breadcrumbs based on current route
   const generateBreadcrumbs = (): BreadcrumbItemType[] => {
@@ -84,8 +84,34 @@ export default function Layout() {
           label: 'Gestion des Contrats',
           path: `/client/${params.clientId}/contracts`
         });
+        
+        // Catalog page
+        if (pathSegments[3] === 'catalog') {
+          breadcrumbs.push({ label: 'Catalogue des Contrats' });
+        }
       }
-      // Contract detail
+      // Subscription routes
+      else if (pathSegments[2] === 'subscription') {
+        breadcrumbs.push({ 
+          label: 'Gestion des Contrats',
+          path: `/client/${params.clientId}/contracts`
+        });
+        
+        if (pathSegments[3] === 'new') {
+          breadcrumbs.push({ label: 'Nouvelle Souscription' });
+        } else if (params.subscriptionId || params.contractId) {
+          const souscriptionId = params.subscriptionId || params.contractId;
+          const souscription = mockSouscriptions.find(s => s.id === souscriptionId);
+          if (souscription) {
+            const template = mockContratsTemplates.find(t => t.id === souscription.contrat_template_id);
+            const label = template ? `${souscription.code_souscription} - ${template.intitule}` : souscription.code_souscription;
+            breadcrumbs.push({ label });
+          } else {
+            breadcrumbs.push({ label: `Souscription ${souscriptionId}` });
+          }
+        }
+      }
+      // Old contract route (redirect compatibility)
       else if (pathSegments[2] === 'contract' && params.contractId) {
         breadcrumbs.push({ 
           label: 'Gestion des Contrats',
@@ -93,11 +119,16 @@ export default function Layout() {
         });
         
         if (params.contractId === 'new') {
-          breadcrumbs.push({ label: 'Nouveau Contrat' });
+          breadcrumbs.push({ label: 'Nouvelle Souscription' });
         } else {
-          const contract = mockContrats.find(c => c.id === params.contractId);
-          const contractLabel = contract ? `${contract.code_contrat} - ${contract.intitule}` : `Contrat ${params.contractId}`;
-          breadcrumbs.push({ label: contractLabel });
+          const souscription = mockSouscriptions.find(s => s.id === params.contractId);
+          if (souscription) {
+            const template = mockContratsTemplates.find(t => t.id === souscription.contrat_template_id);
+            const label = template ? `${souscription.code_souscription} - ${template.intitule}` : souscription.code_souscription;
+            breadcrumbs.push({ label });
+          } else {
+            breadcrumbs.push({ label: `Souscription ${params.contractId}` });
+          }
         }
       }
       // Client detail page (360° view)

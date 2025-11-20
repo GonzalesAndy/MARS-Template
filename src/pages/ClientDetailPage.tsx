@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { mockClients, mockPersonnes, mockContrats, mockContacts, type Personne, type Client } from '@/mocks/data';
+import { mockClients, mockPersonnes, mockSouscriptions, mockContratsTemplates, mockContacts, type Personne, type Client } from '@/mocks/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -82,7 +82,7 @@ export default function ClientDetailPage() {
     });
 
   const clientPersonnes = mockPersonnes.filter(p => p.client_id === clientId);
-  const clientContrats = sortByDateDesc(mockContrats.filter(c => c.client_id === clientId), 'date_souscription');
+  const clientSouscriptions = sortByDateDesc(mockSouscriptions.filter(c => c.client_id === clientId), 'date_souscription');
   const clientContacts = sortByDateDesc(mockContacts.filter(c => c.client_id === clientId), 'date_contact');
   
   // Initialize client form data when entering edit mode
@@ -104,13 +104,16 @@ export default function ClientDetailPage() {
   }
 
   // Calculate contract stats by domain
-  const contractsByDomain = clientContrats.reduce((acc, contrat) => {
-    if (!acc[contrat.domaine]) {
-      acc[contrat.domaine] = { count: 0, lastSubscription: contrat.date_souscription };
+  const contractsByDomain = clientSouscriptions.reduce((acc, souscription) => {
+    const template = mockContratsTemplates.find(t => t.id === souscription.contrat_template_id);
+    if (!template) return acc;
+    
+    if (!acc[template.domaine]) {
+      acc[template.domaine] = { count: 0, lastSubscription: souscription.date_souscription };
     }
-    acc[contrat.domaine].count++;
-    if (contrat.date_souscription > acc[contrat.domaine].lastSubscription) {
-      acc[contrat.domaine].lastSubscription = contrat.date_souscription;
+    acc[template.domaine].count++;
+    if (souscription.date_souscription > acc[template.domaine].lastSubscription) {
+      acc[template.domaine].lastSubscription = souscription.date_souscription;
     }
     return acc;
   }, {} as Record<string, { count: number; lastSubscription: string }>);
@@ -272,7 +275,7 @@ export default function ClientDetailPage() {
               onClick={handleSave}
               disabled={!formData.prenom || !formData.nom || !formData.email}
             >
-              {mode === 'add' ? 'Ajouter' : 'Enregistrer'}
+              {mode === 'add' ? 'Ajouter' : 'Valider'}
             </Button>
           </div>
         </div>
@@ -337,7 +340,7 @@ export default function ClientDetailPage() {
                 </Button>
                 <Button size="sm" onClick={handleClientSave} className="gap-2">
                   <Save className="h-4 w-4" />
-                  Enregistrer
+                  Valider
                 </Button>
               </div>
             )}
@@ -980,7 +983,7 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Contracts Table */}
-        {clientContrats.length > 0 && (
+        {clientSouscriptions.length > 0 && (
           <div className="overflow-x-auto rounded-lg border border-border/30">
             <Table>
               <TableHeader>
@@ -994,32 +997,37 @@ export default function ClientDetailPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clientContrats.map((contrat) => (
-                  <TableRow key={contrat.id} className="hover:bg-accent/10">
-                    <TableCell className="font-mono text-xs">{contrat.code_contrat}</TableCell>
-                    <TableCell className="font-medium">{contrat.intitule}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded-full bg-primary/10 text-xs text-primary">
-                        {contrat.domaine}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        contrat.etat === 'actif' ? 'bg-green-500/10 text-green-500' :
-                        contrat.etat === 'planifié' ? 'bg-blue-500/10 text-blue-500' :
-                        'bg-gray-500/10 text-gray-500'
-                      }`}>
-                        {contrat.etat}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {contrat.montant_annuel.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(contrat.date_souscription).toLocaleDateString('fr-FR')}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {clientSouscriptions.map((souscription) => {
+                  const template = mockContratsTemplates.find(t => t.id === souscription.contrat_template_id);
+                  if (!template) return null;
+                  
+                  return (
+                    <TableRow key={souscription.id} className="hover:bg-accent/10">
+                      <TableCell className="font-mono text-xs">{souscription.code_souscription}</TableCell>
+                      <TableCell className="font-medium">{template.intitule}</TableCell>
+                      <TableCell>
+                        <span className="px-2 py-1 rounded-full bg-primary/10 text-xs text-primary">
+                          {template.domaine}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          souscription.etat === 'actif' ? 'bg-green-500/10 text-green-500' :
+                          souscription.etat === 'planifié' ? 'bg-blue-500/10 text-blue-500' :
+                          'bg-gray-500/10 text-gray-500'
+                        }`}>
+                          {souscription.etat}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {souscription.montant_annuel.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(souscription.date_souscription).toLocaleDateString('fr-FR')}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

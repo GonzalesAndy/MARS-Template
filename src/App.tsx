@@ -6,7 +6,9 @@ import ClientPeoplePage from '@/pages/ClientPeoplePage';
 import ClientContactsPage from '@/pages/ClientContactsPage';
 import ClientContactDetailPage from '@/pages/ClientContactDetailPage';
 import ClientContractsPage from '@/pages/ClientContractsPage';
-import ClientContractDetailPage from '@/pages/ClientContractDetailPage';
+import ContractCatalogPage from '@/pages/ContractCatalogPage';
+import SubscriptionCreatePage from '@/pages/SubscriptionCreatePage';
+import ClientSubscriptionDetailPage from '@/pages/ClientSubscriptionDetailPage';
 
 function App() {
   return (
@@ -20,7 +22,9 @@ function App() {
           <Route path="client/:clientId/contacts" element={<ClientContactsPage />} />
           <Route path="client/:clientId/contact/:contactId" element={<ClientContactDetailPage />} />
           <Route path="client/:clientId/contracts" element={<ClientContractsPage />} />
-          <Route path="client/:clientId/contract/:contractId" element={<ClientContractDetailPage />} />
+          <Route path="client/:clientId/contracts/catalog" element={<ContractCatalogPage />} />
+          <Route path="client/:clientId/subscription/new" element={<SubscriptionCreatePage />} />
+          <Route path="client/:clientId/subscription/:subscriptionId" element={<ClientSubscriptionDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

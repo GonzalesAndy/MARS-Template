@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { mockClients, mockContrats, type Contrat } from '@/mocks/data';
+import { mockClients, mockSouscriptions, mockContratsTemplates, type Souscription } from '@/mocks/data';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -29,34 +29,39 @@ export default function ClientContractsPage() {
   const location = useLocation();
   
   const client = mockClients.find(c => c.id === clientId);
-  const sortContrats = (arr: Contrat[]) => arr.slice().sort((a, b) => {
+  const sortSouscriptions = (arr: Souscription[]) => arr.slice().sort((a, b) => {
     const ta = a.date_souscription ? new Date(a.date_souscription).getTime() : 0;
     const tb = b.date_souscription ? new Date(b.date_souscription).getTime() : 0;
     return tb - ta;
   });
 
-  const [contrats, setContrats] = useState<Contrat[]>(
-    sortContrats(mockContrats.filter(c => c.client_id === clientId))
+  const [souscriptions, setSouscriptions] = useState<Souscription[]>(
+    sortSouscriptions(mockSouscriptions.filter(s => s.client_id === clientId))
   );
 
-  // Update contrats list when navigating back from detail page
+  // Helper to get template for a subscription
+  const getTemplate = (souscription: Souscription) => {
+    return mockContratsTemplates.find(t => t.id === souscription.contrat_template_id);
+  };
+
+  // Update souscriptions list when navigating back from detail page
   useEffect(() => {
-    if (location.state?.updatedContrat) {
-      const updated = location.state.updatedContrat as Contrat;
-      setContrats(prev => sortContrats(prev.map(c => c.id === updated.id ? updated : c)));
+    if (location.state?.updatedSouscription) {
+      const updated = location.state.updatedSouscription as Souscription;
+      setSouscriptions(prev => sortSouscriptions(prev.map(s => s.id === updated.id ? updated : s)));
       navigate(location.pathname, { replace: true, state: {} });
     }
-    if (location.state?.newContrat) {
-      const newC = location.state.newContrat as Contrat;
-      setContrats(prev => {
-        if (prev.some(c => c.id === newC.id)) return prev;
-        return sortContrats([...prev, newC]);
+    if (location.state?.newSouscription) {
+      const newS = location.state.newSouscription as Souscription;
+      setSouscriptions(prev => {
+        if (prev.some(s => s.id === newS.id)) return prev;
+        return sortSouscriptions([...prev, newS]);
       });
       navigate(location.pathname, { replace: true, state: {} });
     }
-    if (location.state?.deletedContratId) {
-      const deletedId = location.state.deletedContratId as string;
-      setContrats(prev => sortContrats(prev.filter(c => c.id !== deletedId)));
+    if (location.state?.deletedSouscriptionId) {
+      const deletedId = location.state.deletedSouscriptionId as string;
+      setSouscriptions(prev => sortSouscriptions(prev.filter(s => s.id !== deletedId)));
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, navigate, location.pathname]);
@@ -81,20 +86,19 @@ export default function ClientContractsPage() {
   };
 
   const handleAdd = () => {
-    navigate(`/client/${clientId}/contract/new`, {
-      state: { mode: 'add', clientId }
+    // Navigate to catalog instead of direct creation
+    navigate(`/client/${clientId}/contracts/catalog`);
+  };
+
+  const handleEdit = (souscription: Souscription) => {
+    navigate(`/client/${clientId}/subscription/${souscription.id}`, {
+      state: { mode: 'edit', souscription, clientId }
     });
   };
 
-  const handleEdit = (contrat: Contrat) => {
-    navigate(`/client/${clientId}/contract/${contrat.id}`, {
-      state: { mode: 'edit', contrat, clientId }
-    });
-  };
-
-  const handleView = (contrat: Contrat) => {
-    navigate(`/client/${clientId}/contract/${contrat.id}`, {
-      state: { mode: 'view', contrat, clientId }
+  const handleView = (souscription: Souscription) => {
+    navigate(`/client/${clientId}/subscription/${souscription.id}`, {
+      state: { mode: 'view', souscription, clientId }
     });
   };
 
@@ -128,17 +132,19 @@ export default function ClientContractsPage() {
     return colors[domaine] || 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
 
-  // Group contracts by domain and keep each domain list sorted newest-first
-  const contratsByDomain = Object.entries(contrats.reduce((acc, contrat) => {
-    if (!acc[contrat.domaine]) {
-      acc[contrat.domaine] = [];
+  // Group subscriptions by domain (via templates) and keep each domain list sorted newest-first
+  const souscriptionsByDomain = Object.entries(souscriptions.reduce((acc, souscription) => {
+    const template = getTemplate(souscription);
+    const domaine = template?.domaine || 'Autres';
+    if (!acc[domaine]) {
+      acc[domaine] = [];
     }
-    acc[contrat.domaine].push(contrat);
+    acc[domaine].push(souscription);
     return acc;
-  }, {} as Record<string, Contrat[]>)).reduce((acc, [domaine, list]) => {
-    acc[domaine] = sortContrats(list);
+  }, {} as Record<string, Souscription[]>)).reduce((acc, [domaine, list]) => {
+    acc[domaine] = sortSouscriptions(list);
     return acc;
-  }, {} as Record<string, Contrat[]>);
+  }, {} as Record<string, Souscription[]>);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
@@ -171,48 +177,40 @@ export default function ClientContractsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
         <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Total Contrats</span>
-            <FileText className="h-5 w-5 text-primary" />
-          </div>
-          <p className="text-3xl font-bold text-foreground">{contrats.length}</p>
-        </div>
-
-        <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Contrats Actifs</span>
+            <span className="text-sm text-muted-foreground">Contrats actifs</span>
             <CheckCircle2 className="h-5 w-5 text-green-500" />
           </div>
           <p className="text-3xl font-bold text-green-500">
-            {contrats.filter(c => c.etat === 'actif').length}
+            {souscriptions.filter(s => s.etat === 'actif').length}/{souscriptions.length}
           </p>
         </div>
 
         <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Revenu Mensuel</span>
-            <DollarSign className="h-5 w-5 text-primary" />
-          </div>
-          <p className="text-2xl font-bold text-foreground">
-            {formatCurrency(contrats.filter(c => c.etat === 'actif').reduce((sum, c) => sum + c.montant_mensuel, 0))}
-          </p>
-        </div>
-
-        <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Revenu Annuel</span>
+            <span className="text-sm text-muted-foreground">Montant Annuel Total</span>
             <DollarSign className="h-5 w-5 text-accent" />
           </div>
           <p className="text-2xl font-bold text-foreground">
-            {formatCurrency(contrats.filter(c => c.etat === 'actif').reduce((sum, c) => sum + c.montant_annuel, 0))}
+            {formatCurrency(souscriptions.filter(s => s.etat === 'actif').reduce((sum, s) => sum + s.montant_annuel, 0))}
+          </p>
+        </div>
+
+        <div className="bg-card/40 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-border/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-muted-foreground">Revenu Mensuel Total</span>
+            <DollarSign className="h-5 w-5 text-primary" />
+          </div>
+          <p className="text-2xl font-bold text-foreground">
+            {formatCurrency(souscriptions.filter(s => s.etat === 'actif').reduce((sum, s) => sum + s.montant_mensuel, 0))}
           </p>
         </div>
       </div>
 
-      {/* Contracts by Domain */}
-      {Object.entries(contratsByDomain).map(([domaine, domainContrats], domainIndex) => (
+      {/* Subscriptions by Domain */}
+      {Object.entries(souscriptionsByDomain).map(([domaine, domainSouscriptions], domainIndex) => (
         <div 
           key={domaine}
           className="bg-card/40 backdrop-blur-sm rounded-2xl shadow-2xl border border-border/50 overflow-hidden animate-slide-up" 
@@ -224,7 +222,7 @@ export default function ClientContractsPage() {
                 {domaine}
               </span>
               <span className="text-muted-foreground">
-                {domainContrats.length} contrat{domainContrats.length > 1 ? 's' : ''}
+                {domainSouscriptions.length} contrat{domainSouscriptions.length > 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -245,62 +243,67 @@ export default function ClientContractsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {domainContrats.map((contrat, index) => (
+                {domainSouscriptions.map((souscription, index) => {
+                  const template = getTemplate(souscription);
+                  const subscribedOptions = souscription.options_souscrites?.filter(os => os.statut === 'souscrite').length || 0;
+                  const totalOptions = template?.options.length || 0;
+                  
+                  return (
                   <TableRow 
-                    key={contrat.id}
+                    key={souscription.id}
                     className="cursor-pointer transition-all hover:bg-accent/20"
-                    onClick={() => handleView(contrat)}
+                    onClick={() => handleView(souscription)}
                     style={{ 
                       animationDelay: `${0.05 * index}s`,
                       animation: 'slide-up 0.3s ease-out'
                     }}
                   >
                     <TableCell className="py-5">
-                      <p className="font-mono text-xs font-medium text-foreground">{contrat.code_contrat}</p>
+                      <p className="font-mono text-xs font-medium text-foreground">{souscription.code_souscription}</p>
                     </TableCell>
                     <TableCell className="py-5">
                       <div>
-                        <p className="font-medium text-foreground">{contrat.intitule}</p>
-                        <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate">{contrat.descriptif}</p>
+                        <p className="font-medium text-foreground">{template?.intitule || 'Contrat inconnu'}</p>
+                        <p className="text-xs text-muted-foreground mt-1 max-w-xs truncate">{template?.descriptif || ''}</p>
                       </div>
                     </TableCell>
                     <TableCell className="py-5">
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-foreground">{formatDate(contrat.date_souscription)}</span>
+                        <span className="text-sm text-foreground">{formatDate(souscription.date_souscription)}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-5">
                       <span className="text-sm text-muted-foreground">
-                        {contrat.duree ? `${contrat.duree} mois` : '-'}
+                        {souscription.duree ? `${souscription.duree} mois` : '-'}
                       </span>
                     </TableCell>
                     <TableCell className="py-5">
-                      <span className="text-sm text-foreground capitalize">{contrat.periodicite}</span>
+                      <span className="text-sm text-foreground capitalize">{souscription.periodicite}</span>
                     </TableCell>
                     <TableCell className="py-5">
                       <div>
                         <p className="font-semibold text-foreground">
-                          {contrat.periodicite === 'mensuelle' 
-                            ? formatCurrency(contrat.montant_mensuel)
-                            : formatCurrency(contrat.montant_annuel)
+                          {souscription.periodicite === 'mensuelle' 
+                            ? formatCurrency(souscription.montant_mensuel)
+                            : formatCurrency(souscription.montant_annuel)
                           }
                           <span className="text-xs text-muted-foreground">
-                            /{contrat.periodicite === 'mensuelle' ? 'mois' : 'an'}
+                            /{souscription.periodicite === 'mensuelle' ? 'mois' : 'an'}
                           </span>
                         </p>
-                        {contrat.periodicite === 'mensuelle' && (
+                        {souscription.periodicite === 'mensuelle' && (
                           <p className="text-xs text-muted-foreground">
-                            {formatCurrency(contrat.montant_annuel)}/an
+                            {formatCurrency(souscription.montant_annuel)}/an
                           </p>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="py-5">
-                      {contrat.options && contrat.options.length > 0 ? (
+                      {totalOptions > 0 ? (
                         <div className="space-y-1">
                           <span className="px-2 py-1 rounded bg-primary/10 text-xs font-medium text-primary">
-                            {contrat.options.filter(o => o.statut === 'souscrite').length}/{contrat.options.length}
+                            {subscribedOptions}/{totalOptions}
                           </span>
                         </div>
                       ) : (
@@ -308,9 +311,9 @@ export default function ClientContractsPage() {
                       )}
                     </TableCell>
                     <TableCell className="py-5">
-                      <span className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-2 w-fit ${getEtatColor(contrat.etat)}`}>
-                        {getEtatIcon(contrat.etat)}
-                        {contrat.etat}
+                      <span className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-2 w-fit ${getEtatColor(souscription.etat)}`}>
+                        {getEtatIcon(souscription.etat)}
+                        {souscription.etat}
                       </span>
                     </TableCell>
                     <TableCell className="py-5">
@@ -319,14 +322,15 @@ export default function ClientContractsPage() {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEdit(contrat);
+                          handleEdit(souscription);
                         }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
@@ -334,7 +338,7 @@ export default function ClientContractsPage() {
       ))}
 
       {/* Empty State */}
-      {contrats.length === 0 && (
+      {souscriptions.length === 0 && (
         <div className="bg-card/40 backdrop-blur-sm rounded-2xl shadow-2xl border border-border/50 p-12 text-center">
           <FileText className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">Aucun contrat enregistré</p>
