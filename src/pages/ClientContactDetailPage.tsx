@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
-import { mockClients, mockContacts, type Contact, type Offer, AVAILABLE_CONTRATS, AVAILABLE_PRODUITS } from '@/mocks/data';
+import { mockClients, mockContacts, type Contact, type Offer, AVAILABLE_CONTRATS, AVAILABLE_PRODUITS, mockContratsTemplates, AVAILABLE_PRODUITS_CATALOG } from '@/mocks/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -59,6 +59,24 @@ export default function ClientContactDetailPage() {
       setMode(location.state?.mode || 'view');
     }
   }, [contactId, location.state]);
+
+  // Accept selected offer coming back from OfferCatalogPage
+  useEffect(() => {
+    if (location.state?.selectedOffer && location.state?.offerType) {
+      const newOffer: Offer = {
+        id: `OFF${Date.now()}`,
+        type: location.state.offerType,
+        nom: location.state.selectedOffer,
+        annotation: location.state.offerAnnotation || '',
+        statut: 'proposé',
+        products: location.state.offerProducts || undefined
+      };
+
+      setFormData(prev => ({ ...prev, offers: [...(prev.offers || []), newOffer] }));
+      // clear the navigation state to avoid re-adding on remount
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Find child contacts (contacts that have this contact as parent)
   const childContacts = useMemo(() => {
@@ -575,19 +593,19 @@ export default function ClientContactDetailPage() {
               <PackagePlus className="h-6 w-6 text-primary" />
               Offres Proposées
             </h2>
-            {mode === 'realiser' && !showOfferSelection && (
+            {mode === 'realiser' && (
               <div className="flex gap-2">
-                <Button 
-                  onClick={() => { setOfferType('contrat'); setShowOfferSelection(true); }} 
-                  size="sm" 
+                <Button
+                  onClick={() => navigate(`/client/${clientId}/contracts/catalog`, { state: { returnToContact: contactId || formData.id } })}
+                  size="sm"
                   className="gap-2"
                 >
                   <Plus className="h-4 w-4" />
                   Ajouter Contrat
                 </Button>
-                <Button 
-                  onClick={() => { setOfferType('produit'); setShowOfferSelection(true); }} 
-                  size="sm" 
+                <Button
+                  onClick={() => navigate(`/client/${clientId}/contact/${contactId || formData.id}/offer-catalog/produit`)}
+                  size="sm"
                   variant="outline"
                   className="gap-2"
                 >
@@ -599,51 +617,7 @@ export default function ClientContactDetailPage() {
           </div>
 
           {/* Offer Selection Form */}
-          {showOfferSelection && mode === 'realiser' && (
-            <div className="bg-background/50 rounded-xl p-6 border border-border/50 mb-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Ajouter une offre {offerType === 'contrat' ? 'de Contrat' : 'de Produit'}
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Sélectionner {offerType === 'contrat' ? 'un contrat' : 'un produit'}
-                  </label>
-                  <select
-                    value={selectedOffer}
-                    onChange={(e) => setSelectedOffer(e.target.value)}
-                    className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground"
-                  >
-                    <option value="">-- Sélectionner --</option>
-                    {(offerType === 'contrat' ? AVAILABLE_CONTRATS : AVAILABLE_PRODUITS).map(item => (
-                      <option key={item} value={item}>{item}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-muted-foreground mb-2">
-                    Annotation
-                  </label>
-                  <textarea
-                    value={offerAnnotation}
-                    onChange={(e) => setOfferAnnotation(e.target.value)}
-                    placeholder="Notes sur la proposition..."
-                    rows={3}
-                    className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground resize-none"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleAddOffer} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Ajouter
-                  </Button>
-                  <Button onClick={() => setShowOfferSelection(false)} variant="outline">
-                    Annuler
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Offer selection is now done on a separate page (offer-catalog) */}
 
           {/* Offers List */}
           {formData.offers && formData.offers.length > 0 ? (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { mockContratsTemplates, type ContratTemplate } from '@/mocks/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import {
 export default function ContractCatalogPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string>('');
@@ -32,6 +33,15 @@ export default function ContractCatalogPage() {
   });
 
   const handleSubscribe = (template: ContratTemplate) => {
+    // If we were opened to return a selected contract to a contact, do that instead
+    const returnToContact = (location.state as any)?.returnToContact as string | undefined;
+    if (returnToContact) {
+      navigate(`/client/${clientId}/contact/${returnToContact}`, {
+        state: { selectedOffer: template.intitule, offerType: 'contrat' }
+      });
+      return;
+    }
+
     navigate(`/client/${clientId}/subscription/new`, {
       state: { template }
     });
@@ -299,14 +309,34 @@ export default function ContractCatalogPage() {
 
               {/* Subscribe Button */}
               <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm border-t border-border pt-6 -mx-6 -mb-6 px-6 pb-6">
-                <Button
-                  onClick={() => handleSubscribe(selectedTemplate)}
-                  className="w-full gap-2"
-                  size="lg"
-                >
-                  <CheckCircle2 className="h-5 w-5" />
-                  Souscrire à ce contrat
-                </Button>
+                {((location.state as any)?.returnToContact) ? (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleSubscribe(selectedTemplate)}
+                      className="w-full gap-2"
+                      size="lg"
+                    >
+                      <CheckCircle2 className="h-5 w-5" />
+                      Sélectionner ce contrat
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="lg"
+                      onClick={() => setSelectedTemplate(null)}
+                    >
+                      Annuler
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => handleSubscribe(selectedTemplate)}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    <CheckCircle2 className="h-5 w-5" />
+                    Souscrire à ce contrat
+                  </Button>
+                )}
               </div>
             </div>
           </div>

@@ -101,6 +101,13 @@ export default function ClientSubscriptionDetailPage() {
   }
 
   const handleChange = (field: keyof Souscription, value: string | number | undefined) => {
+    const isContractOnlyEditLocal = mode === 'edit' && !formData.code_souscription;
+    const allowedFieldsForContractOnly: Array<keyof Souscription> = ['periodicite', 'date_debut', 'options_souscrites'];
+    if (isContractOnlyEditLocal && !allowedFieldsForContractOnly.includes(field)) {
+      // ignore changes to disallowed fields when editing a contract-only
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: false }));
   };
@@ -117,11 +124,15 @@ export default function ClientSubscriptionDetailPage() {
   };
 
   const handleSave = () => {
+    const isContractOnlyEdit = mode === 'edit' && !formData.code_souscription;
     const newErrors: Record<string, boolean> = {};
-    
-    if (!formData.date_souscription) newErrors.date_souscription = true;
-    if (!formData.duree || formData.duree <= 0) newErrors.duree = true;
-    
+
+    // When editing a contract (no subscription code), only options, periodicite and date_debut are editable
+    if (!isContractOnlyEdit) {
+      if (!formData.date_souscription) newErrors.date_souscription = true;
+      if (!formData.duree || formData.duree <= 0) newErrors.duree = true;
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -208,7 +219,8 @@ export default function ClientSubscriptionDetailPage() {
     }
   };
 
-  const canSave = formData.date_souscription && (formData.duree || 0) > 0;
+  const isContractOnlyEdit = mode === 'edit' && !formData.code_souscription;
+  const canSave = isContractOnlyEdit ? true : (formData.date_souscription && (formData.duree || 0) > 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
@@ -351,19 +363,10 @@ export default function ClientSubscriptionDetailPage() {
             <label className="block text-sm font-medium text-muted-foreground mb-2">
               Date de Souscription *
             </label>
-            {mode === 'view' ? (
               <p className="text-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 {formatDate(formData.date_souscription)}
               </p>
-            ) : (
-              <Input
-                type="date"
-                value={formData.date_souscription}
-                onChange={(e) => handleChange('date_souscription', e.target.value)}
-                className={errors.date_souscription ? 'border-red-500' : ''}
-              />
-            )}
           </div>
 
           {/* Date Début */}
@@ -390,18 +393,7 @@ export default function ClientSubscriptionDetailPage() {
             <label className="block text-sm font-medium text-muted-foreground mb-2">
               Durée (mois) *
             </label>
-            {mode === 'view' ? (
               <p className="text-foreground">{formData.duree ? `${formData.duree} mois` : '-'}</p>
-            ) : (
-              <Input
-                type="number"
-                value={formData.duree || ''}
-                onChange={(e) => handleChange('duree', parseInt(e.target.value) || undefined)}
-                placeholder="12"
-                min="1"
-                className={errors.duree ? 'border-red-500' : ''}
-              />
-            )}
           </div>
 
           {/* État */}
@@ -409,23 +401,11 @@ export default function ClientSubscriptionDetailPage() {
             <label className="block text-sm font-medium text-muted-foreground mb-2">
               État
             </label>
-            {mode === 'view' ? (
               <div className="flex items-center gap-2">
                 {getEtatIcon(formData.etat)}
                 <p className="text-foreground capitalize">{formData.etat}</p>
               </div>
-            ) : (
-              <select
-                value={formData.etat}
-                onChange={(e) => handleChange('etat', e.target.value)}
-                className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground"
-              >
-                <option value="planifié">Planifié</option>
-                <option value="actif">Actif</option>
-                <option value="résilié">Résilié</option>
-                <option value="annulé">Annulé</option>
-              </select>
-            )}
+
           </div>
 
           {/* Date Fin */}
@@ -433,18 +413,19 @@ export default function ClientSubscriptionDetailPage() {
             <label className="block text-sm font-medium text-muted-foreground mb-2">
               Date de Fin
             </label>
-            {mode === 'view' ? (
               <p className="text-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 {formData.date_fin ? formatDate(formData.date_fin) : '-'}
               </p>
-            ) : (
-              <Input
-                type="date"
-                value={formData.date_fin || ''}
-                onChange={(e) => handleChange('date_fin', e.target.value || undefined)}
-              />
-            )}
+          </div>
+
+          {/* Agent Origine (montré dans la section Informations de Souscription) */}
+          <div>
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
+              Agent Origine
+            </label>
+              <p className="text-foreground">{formData.agent_origine}</p>
+
           </div>
         </div>
       </div>
@@ -561,29 +542,7 @@ export default function ClientSubscriptionDetailPage() {
         </div>
       </div>
 
-      {/* Origin Tracking (View only) */}
-      {mode === 'view' && (
-        <div className="bg-card/40 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-border/50 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-            <div>
-              <p className="text-muted-foreground mb-1">Agent Origine</p>
-              <p className="text-foreground font-medium">{formData.agent_origine}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-1">Date Origine</p>
-              <p className="text-foreground font-medium">{formatDate(formData.date_origine)}</p>
-            </div>
-            {formData.modified_at && (
-              <div>
-                <p className="text-muted-foreground mb-1">Dernière Modification</p>
-                <p className="text-foreground font-medium">
-                  {formatDate(formData.modified_at)} par {formData.modified_by}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Origin Tracking removed from separate block — Agent Origine moved into Subscription Info */}
 
       {/* Terminate Contract Dialog */}
       {showTerminateDialog && (

@@ -46,11 +46,12 @@ export interface Personne {
 
 export interface Offer {
   id: string;
-  type: 'contrat' | 'produit';
+  type: 'contrat' | 'produit' | 'offre';
   nom: string;
   description?: string;
   annotation?: string;
   statut?: 'proposé' | 'accepté' | 'refusé';
+  products?: string[]; // list of product names when this is an 'offre'
 }
 
 export interface Contact {
@@ -93,6 +94,59 @@ export const AVAILABLE_PRODUITS = [
   'Plan d\'Épargne Entreprise',
   'Terminal de Paiement',
   'Solution de Gestion de Trésorerie',
+];
+
+// More structured product catalog with segments to allow grouping by segment in UI
+export interface ProduitCatalogItem {
+  nom: string;
+  description?: string;
+  segments: string[]; // segments this product is relevant for
+}
+
+export const AVAILABLE_PRODUITS_CATALOG: ProduitCatalogItem[] = [
+  { nom: 'Carte Bancaire Premium', description: 'Carte avec plafonds élevés, garanties voyages et assurances renforcées pour professionnels et particuliers premium.', segments: ['Particulier', 'Premium'] },
+  { nom: 'Compte Épargne Rémunéré', description: 'Compte épargne offrant un taux compétitif, accès en ligne et options de versements programmés.', segments: ['Particulier', 'Standard'] },
+  { nom: 'Prêt Professionnel', description: 'Financement destiné aux besoins d\'investissement et de trésorerie des entreprises, avec durées et modalités adaptées.', segments: ['PME', 'TPE', 'Grande Entreprise'] },
+  { nom: 'Crédit Équipement', description: 'Crédit spécialement conçu pour l\'acquisition d\'équipements professionnels, remboursement flexible et taux préférentiels.', segments: ['PME', 'TPE', 'Services'] },
+  { nom: 'Assurance Vie', description: 'Contrat d\'épargne long terme avec options de transmission, fiscalité avantageuse et unités de compte disponibles.', segments: ['Particulier', 'Premium'] },
+  { nom: "Plan d'Épargne Entreprise", description: 'Solution d\'épargne salariale pour associer et fidéliser les collaborateurs (abondement, participation).', segments: ['Grande Entreprise', 'PME'] },
+  { nom: 'Terminal de Paiement', description: 'Solution de paiement par carte, sécurisée et intégrée, adaptée aux commerces et points de vente.', segments: ['Commerce', 'TPE', 'PME'] },
+  { nom: 'Solution de Gestion de Trésorerie', description: 'Outils de pilotage et prévision de trésorerie, rapprochement automatique et rapports personnalisés.', segments: ['Grande Entreprise', 'PME'] },
+];
+
+// Catalogue d'offres : une offre peut regrouper plusieurs produits et cibler plusieurs segments
+export interface OffreCatalogItem {
+  nom: string;
+  description?: string;
+  products: string[]; // noms des produits inclus
+  segments: string[]; // segments cibles
+}
+
+export const AVAILABLE_OFFRES_CATALOG: OffreCatalogItem[] = [
+  {
+    nom: 'Offre Tranquillité PME',
+    description: 'Pack essentiel pour PME : terminal paiement, compte épargne, assurance multirisque professionnelle.',
+    products: ['Terminal de Paiement', 'Compte Épargne Rémunéré', 'Assurance Multirisque Professionnelle'],
+    segments: ['PME', 'TPE']
+  },
+  {
+    nom: 'Offre Croissance Entreprise',
+    description: 'Solutions de financement et gestion de trésorerie pour soutenir la croissance.',
+    products: ['Prêt Professionnel', 'Solution de Gestion de Trésorerie'],
+    segments: ['PME', 'Grande Entreprise']
+  },
+  {
+    nom: 'Offre Particulier Premium',
+    description: 'Services premium pour particuliers : carte premium et assurance vie.',
+    products: ['Carte Bancaire Premium', 'Assurance Vie'],
+    segments: ['Particulier', 'Premium']
+  },
+  {
+    nom: 'Offre Commerce',
+    description: 'Pack pour commerces : terminal de paiement et outils de gestion.',
+    products: ['Terminal de Paiement', 'Solution de Gestion de Trésorerie'],
+    segments: ['Commerce', 'TPE']
+  }
 ];
 
 // ====== CONTRAT TEMPLATE (Catalogue fixe) ======

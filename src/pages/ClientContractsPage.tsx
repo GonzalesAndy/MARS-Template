@@ -231,7 +231,8 @@ export default function ClientContractsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30">
-                  <TableHead className="text-xs uppercase tracking-wider py-5">Code</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider py-5">Numéro Contrat</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider py-5">Numéro Souscription</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Intitulé</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Date Souscription</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider py-5">Durée</TableHead>
@@ -258,6 +259,9 @@ export default function ClientContractsPage() {
                       animation: 'slide-up 0.3s ease-out'
                     }}
                   >
+                    <TableCell className="py-5">
+                      <p className="font-mono text-xs font-medium text-foreground">{template?.code_contrat || '-'}</p>
+                    </TableCell>
                     <TableCell className="py-5">
                       <p className="font-mono text-xs font-medium text-foreground">{souscription.code_souscription}</p>
                     </TableCell>
