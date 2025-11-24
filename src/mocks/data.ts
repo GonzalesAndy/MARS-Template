@@ -228,7 +228,7 @@ export const mockClients: Client[] = [
     email: 'contact@technosolutions.fr',
     date_creation: '2022-03-15',
     derniere_interaction: '2024-11-10',
-    nombre_contrats: 8,
+    nombre_contrats: 2,
     solde_total: 450000,
     risque: 'Faible',
     potentiel: 85,
