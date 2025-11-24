@@ -118,6 +118,12 @@ export default function ClientDetailPage() {
     return acc;
   }, {} as Record<string, { count: number; lastSubscription: string }>);
 
+  // All contract domains available in mock templates and existing client contracts
+  const allContractDomains = Array.from(new Set([
+    ...mockContratsTemplates.map(t => t.domaine),
+    ...Object.keys(contractsByDomain),
+  ]));
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'Faible': return 'text-green-500';
@@ -125,6 +131,12 @@ export default function ClientDetailPage() {
       case 'Élevé': return 'text-red-500';
       default: return 'text-muted-foreground';
     }
+  };
+
+  const getReciprocity = (reciprocity: number) => {
+    if (reciprocity >= 80) return 'Élevée';
+    if (reciprocity >= 60) return 'Moyenne';
+    return 'Faible';
   };
 
   const getPotentialColor = (potentiel: number) => {
@@ -298,12 +310,7 @@ export default function ClientDetailPage() {
                     className="text-2xl font-bold h-auto py-2"
                     placeholder="Dénomination"
                   />
-                  <Input
-                    value={displayClient?.numero_client || ''}
-                    onChange={(e) => handleClientChange('numero_client', e.target.value)}
-                    className="text-sm font-mono"
-                    placeholder="Numéro client"
-                  />
+                  <p className="text-sm text-muted-foreground font-mono">{client.numero_client}</p>
                 </div>
               ) : (
                 <>
@@ -368,18 +375,7 @@ export default function ClientDetailPage() {
             <Building2 className="h-5 w-5 text-muted-foreground mt-1" />
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">Type</p>
-              {isEditingClient ? (
-                <select
-                  value={displayClient?.is_personne_morale ? 'true' : 'false'}
-                  onChange={(e) => handleClientChange('is_personne_morale', e.target.value === 'true')}
-                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground text-sm"
-                >
-                  <option value="false">Particulier</option>
-                  <option value="true">Personne Morale</option>
-                </select>
-              ) : (
                 <p className="text-foreground">{client.is_personne_morale ? 'Personne Morale' : 'Particulier'}</p>
-              )}
             </div>
           </div>
           
@@ -387,47 +383,12 @@ export default function ClientDetailPage() {
             <Users className="h-5 w-5 text-muted-foreground mt-1" />
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">Agence</p>
-              {isEditingClient ? (
-                <Input
-                  value={displayClient?.agence || ''}
-                  onChange={(e) => handleClientChange('agence', e.target.value)}
-                  placeholder="Agence"
-                  className="mb-2"
-                />
-              ) : (
                 <p className="text-foreground">{client.agence}</p>
-              )}
-              
               <p className="text-xs text-muted-foreground mt-1">Conseiller:</p>
-              {isEditingClient ? (
-                <Input
-                  value={displayClient?.conseiller_referent || ''}
-                  onChange={(e) => handleClientChange('conseiller_referent', e.target.value)}
-                  placeholder="Conseiller référent"
-                  className="mt-1"
-                />
-              ) : (
                 <p className="text-foreground text-sm">{client.conseiller_referent}</p>
-              )}
             </div>
           </div>
         </div>
-
-        {/* Cotation Section */}
-        {isEditingClient && (
-          <div className="border-t border-border/30 pt-6 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              <p className="text-sm font-medium text-muted-foreground">Cotation</p>
-            </div>
-            <Input
-              value={displayClient?.cotation || ''}
-              onChange={(e) => handleClientChange('cotation', e.target.value)}
-              placeholder="Ex: A+, A, B+, B, C+"
-              className="max-w-xs"
-            />
-          </div>
-        )}
 
         {/* Segments Section */}
         {isEditingClient && (
@@ -464,14 +425,30 @@ export default function ClientDetailPage() {
       {(mode === 'edit' || mode === 'add') && (
         <div className="bg-card/40 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-border/50 animate-slide-up">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Personal Information */}
+            {/* Contract quick summary (from mock data) */}
+            <div className="md:col-span-2 grid grid-cols-2 gap-4 mb-4">
+              {allContractDomains.map((domain) => {
+                const stats = contractsByDomain[domain];
+                return (
+                  <div key={domain} className="p-3 rounded-lg bg-background/50 border border-border/30">
+                    <p className="text-sm text-muted-foreground mb-1">{domain}</p>
+                    <p className="text-2xl font-bold text-foreground mb-1">{stats?.count ?? 0}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>Dernier: {stats && stats.lastSubscription ? new Date(stats.lastSubscription).toLocaleDateString('fr-FR') : 'N/A'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 Informations Personnelles
               </h3>
               
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <label className="text-sm font-medium text-muted-foreground">Prénom *</label>
                 <Input
                   value={formData.prenom || ''}
@@ -925,18 +902,14 @@ export default function ClientDetailPage() {
               </p>
             </div>
 
-            {/* Status */}
+            {/* Reciprocity */}
             <div className="p-4 rounded-lg bg-background/50 border border-border/30">
-              <p className="text-sm text-muted-foreground mb-2">Statut</p>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                client.statut === 'Actif' ? 'bg-green-500/10 text-green-500' :
-                client.statut === 'Inactif' ? 'bg-gray-500/10 text-gray-500' :
-                'bg-blue-500/10 text-blue-500'
-              }`}>
-                {client.statut}
-              </span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">Reciprocité</span>
+                <AlertCircle className={`h-5 w-5 ${getReciprocity(client.reciprocity ?? 0)}`} />
+              </div>
+              <p className={`text-2xl font-bold ${getReciprocity(client.reciprocity ?? 0)}`}>{getReciprocity(client.reciprocity ?? 0)}</p>
             </div>
-
             {/* Cotation */}
             {client.cotation && (
               <div className="p-4 rounded-lg bg-background/50 border border-border/30">
@@ -969,17 +942,20 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Contract Summary by Domain */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {Object.entries(contractsByDomain).map(([domain, stats]) => (
-            <div key={domain} className="p-4 rounded-lg bg-background/50 border border-border/30">
-              <p className="text-sm text-muted-foreground mb-1">{domain}</p>
-              <p className="text-2xl font-bold text-foreground mb-2">{stats.count}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                <span>Dernier: {new Date(stats.lastSubscription).toLocaleDateString('fr-FR')}</span>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {allContractDomains.map((domain) => {
+            const stats = contractsByDomain[domain];
+            return (
+              <div key={domain} className="p-4 rounded-lg bg-background/50 border border-border/30">
+                <p className="text-sm text-muted-foreground mb-1">{domain}</p>
+                <p className="text-2xl font-bold text-foreground mb-2">{stats?.count ?? 0}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>Dernier: {stats && stats.lastSubscription ? new Date(stats.lastSubscription).toLocaleDateString('fr-FR') : 'N/A'}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Contracts Table */}
@@ -993,7 +969,7 @@ export default function ClientDetailPage() {
                   <TableHead className="text-xs uppercase tracking-wider">Domaine</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider">État</TableHead>
                   <TableHead className="text-xs uppercase tracking-wider">Montant Annuel</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Date</TableHead>
+                  <TableHead className="text-xs uppercase tracking-wider">Date Souscription</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

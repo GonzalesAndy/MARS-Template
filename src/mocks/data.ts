@@ -9,6 +9,7 @@ export interface Client {
   agence: string;
   conseiller_referent: string;
   telephone?: string;
+  reciprocity?: number;
   email?: string;
   date_creation: string;
   derniere_interaction?: string;
