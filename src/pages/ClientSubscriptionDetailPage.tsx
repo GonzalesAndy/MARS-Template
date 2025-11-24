@@ -7,7 +7,6 @@ import {
   ArrowLeft, 
   Save, 
   Edit, 
-  Trash2, 
   X,
   FileText,
   Calendar,
@@ -139,14 +138,6 @@ export default function ClientSubscriptionDetailPage() {
     });
   };
 
-  const handleDelete = () => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette souscription ?')) {
-      navigate(`/client/${clientId}/contracts`, {
-        state: { deletedSouscriptionId: formData.id }
-      });
-    }
-  };
-
   const handleTerminate = () => {
     setDateFin(new Date().toISOString().split('T')[0]);
     setShowTerminateDialog(true);
@@ -245,10 +236,6 @@ export default function ClientSubscriptionDetailPage() {
                   Résilier
                 </Button>
               )}
-              <Button variant="destructive" onClick={handleDelete} className="gap-2">
-                <Trash2 className="h-4 w-4" />
-                Supprimer
-              </Button>
             </>
           )}
           {mode === 'edit' && (
