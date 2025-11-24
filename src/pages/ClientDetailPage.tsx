@@ -354,7 +354,7 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="flex items-start gap-3">
             <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
             <div className="flex-1">
@@ -376,6 +376,14 @@ export default function ClientDetailPage() {
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-1">Type</p>
                 <p className="text-foreground">{client.is_personne_morale ? 'Personne Morale' : 'Particulier'}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Phone className="h-5 w-5 text-muted-foreground mt-1" />
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground mb-1">Contact Préféré</p>
+                <p className="text-foreground">Téléphone</p>
             </div>
           </div>
           
@@ -1017,7 +1025,7 @@ export default function ClientDetailPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Phone className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold text-foreground">Historique des Interactions</h2>
+            <h2 className="text-xl font-semibold text-foreground">Historique des Contacts</h2>
           </div>
           <Button 
             variant="ghost" 

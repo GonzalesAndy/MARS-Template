@@ -167,7 +167,7 @@ export default function ClientContactsPage() {
         <div className="flex items-center gap-4 mb-2">
           <Phone className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-4xl font-bold text-foreground">Historique des Interactions</h1>
+            <h1 className="text-4xl font-bold text-foreground">Historique des Contacts</h1>
             <p className="text-muted-foreground mt-2">Client: {client.denomination}</p>
             <p className="text-sm text-muted-foreground/70 font-mono">{client.numero_client}</p>
           </div>
