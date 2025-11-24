@@ -299,33 +299,6 @@ export default function SubscriptionCreatePage() {
               className={errors.duree ? 'border-red-500' : ''}
             />
           </div>
-
-          {/* État */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              État
-            </label>
-            <select
-              value={formData.etat}
-              onChange={(e) => handleChange('etat', e.target.value)}
-              className="w-full bg-background border border-input rounded-md px-3 py-2 text-foreground"
-            >
-              <option value="planifié">Planifié</option>
-              <option value="actif">Actif</option>
-            </select>
-          </div>
-
-          {/* Agent Origine */}
-          <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-2">
-              Agent Origine
-            </label>
-            <Input
-              value={formData.agent_origine}
-              onChange={(e) => handleChange('agent_origine', e.target.value)}
-              placeholder="Agent Actuel"
-            />
-          </div>
         </div>
       </div>
 
